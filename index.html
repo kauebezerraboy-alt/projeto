@@ -1,0 +1,448 @@
+from pathlib import Path
+
+html = r'''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rios e Lagos: Vamos Cuidar!</title>
+<style>
+    * { box-sizing: border-box; }
+
+    :root{
+        --azul:#1677ff;
+        --azul-claro:#eaf4ff;
+        --verde:#1f9d55;
+        --verde-claro:#eafaf1;
+        --amarelo:#ffd84d;
+        --vermelho:#d64242;
+        --cinza:#3d4652;
+        --fundo:#f5fbff;
+        --branco:#ffffff;
+    }
+
+    body{
+        margin:0;
+        font-family: Arial, Helvetica, sans-serif;
+        background:var(--fundo);
+        color:#1d2733;
+        line-height:1.55;
+        font-size:20px;
+    }
+
+    header{
+        background:linear-gradient(135deg,#1677ff,#49a7ff);
+        color:white;
+        padding:32px 18px;
+        text-align:center;
+    }
+
+    header h1{
+        margin:0 0 10px;
+        font-size:clamp(34px,6vw,58px);
+    }
+
+    header p{
+        max-width:760px;
+        margin:0 auto;
+        font-size:clamp(19px,3vw,26px);
+    }
+
+    nav{
+        position:sticky;
+        top:0;
+        z-index:20;
+        background:white;
+        box-shadow:0 3px 12px #0002;
+        display:flex;
+        justify-content:center;
+        gap:10px;
+        padding:12px;
+        flex-wrap:wrap;
+    }
+
+    nav a{
+        color:#123;
+        background:var(--azul-claro);
+        text-decoration:none;
+        padding:12px 18px;
+        border-radius:14px;
+        font-weight:bold;
+    }
+
+    nav a:focus, button:focus{
+        outline:5px solid var(--amarelo);
+        outline-offset:3px;
+    }
+
+    main{
+        max-width:1000px;
+        margin:auto;
+        padding:24px 16px 60px;
+    }
+
+    section{
+        background:white;
+        margin:24px 0;
+        padding:28px;
+        border-radius:24px;
+        box-shadow:0 8px 25px #184c7714;
+    }
+
+    h2{
+        font-size:clamp(28px,5vw,42px);
+        margin-top:0;
+        color:#0b579f;
+    }
+
+    h3{
+        font-size:26px;
+    }
+
+    .frase-chave{
+        background:var(--azul-claro);
+        border-left:8px solid var(--azul);
+        padding:18px;
+        border-radius:12px;
+        font-size:24px;
+        font-weight:bold;
+    }
+
+    .cards{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+        gap:18px;
+    }
+
+    .card{
+        border:3px solid #d9eafa;
+        border-radius:20px;
+        padding:20px;
+        text-align:center;
+        background:#fbfdff;
+    }
+
+    .icone{
+        font-size:64px;
+        display:block;
+        margin-bottom:8px;
+    }
+
+    .simulador{
+        text-align:center;
+    }
+
+    .lago{
+        width:min(100%,700px);
+        height:300px;
+        margin:18px auto;
+        border-radius:28px;
+        position:relative;
+        overflow:hidden;
+        border:6px solid #8d6e4f;
+        background:#4db8ff;
+        transition:.5s;
+    }
+
+    .lago.sujo{
+        background:#7b765e;
+    }
+
+    .sol{
+        position:absolute;
+        right:25px;
+        top:20px;
+        font-size:70px;
+    }
+
+    .peixe{
+        position:absolute;
+        left:15%;
+        bottom:55px;
+        font-size:55px;
+        transition:.5s;
+    }
+
+    .lago.sujo .peixe{
+        opacity:.35;
+        transform:translateY(30px);
+    }
+
+    .plantas{
+        position:absolute;
+        left:15px;
+        bottom:0;
+        font-size:70px;
+    }
+
+    .lixo{
+        position:absolute;
+        font-size:42px;
+        opacity:0;
+        transition:.4s;
+    }
+
+    .lago.sujo .lixo{ opacity:1; }
+    .l1{ left:45%; bottom:55px; }
+    .l2{ right:17%; bottom:100px; }
+    .l3{ left:55%; top:80px; }
+
+    button{
+        border:0;
+        border-radius:16px;
+        padding:16px 22px;
+        margin:8px;
+        min-height:58px;
+        font-size:20px;
+        font-weight:bold;
+        cursor:pointer;
+    }
+
+    .ruim{ background:#ffe3e3; color:#8f1f1f; }
+    .bom{ background:#dff6e8; color:#145b31; }
+    .azul{ background:var(--azul); color:white; }
+
+    #mensagemSimulador{
+        min-height:72px;
+        font-size:24px;
+        font-weight:bold;
+        margin-top:15px;
+    }
+
+    .passos{
+        display:grid;
+        gap:14px;
+    }
+
+    .passo{
+        display:flex;
+        align-items:center;
+        gap:16px;
+        background:var(--verde-claro);
+        padding:16px;
+        border-radius:16px;
+    }
+
+    .numero{
+        min-width:54px;
+        height:54px;
+        border-radius:50%;
+        display:grid;
+        place-items:center;
+        background:var(--verde);
+        color:white;
+        font-weight:bold;
+        font-size:25px;
+    }
+
+    .quiz{
+        background:#fffbea;
+        border:3px solid #ffe173;
+    }
+
+    .quiz-opcoes{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+    }
+
+    .quiz-opcoes button{
+        margin:0;
+        min-height:90px;
+    }
+
+    #respostaQuiz{
+        min-height:65px;
+        padding:15px;
+        margin-top:15px;
+        border-radius:15px;
+        font-weight:bold;
+    }
+
+    .correto{ background:#daf5e4; color:#145b31; }
+    .incorreto{ background:#ffe1e1; color:#8a2525; }
+
+    .leitura{
+        text-align:center;
+        background:#eef8ff;
+    }
+
+    footer{
+        text-align:center;
+        padding:30px 18px;
+        background:#103b62;
+        color:white;
+    }
+
+    @media (max-width:600px){
+        body{ font-size:18px; }
+        section{ padding:20px; border-radius:18px; }
+        .quiz-opcoes{ grid-template-columns:1fr; }
+        .lago{ height:250px; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>💧 Rios e Lagos: Vamos Cuidar!</h1>
+    <p>Um site simples para entender o que deixa a água limpa ou suja.</p>
+</header>
+
+<nav aria-label="Menu principal">
+    <a href="#entender">Entender</a>
+    <a href="#simulador">Experimentar</a>
+    <a href="#cuidar">Cuidar</a>
+    <a href="#quiz">Jogar</a>
+</nav>
+
+<main>
+    <section id="entender">
+        <h2>🌊 O que é a degradação?</h2>
+
+        <p class="frase-chave">
+            Degradação acontece quando um rio ou lago fica prejudicado.
+        </p>
+
+        <div class="cards">
+            <article class="card">
+                <span class="icone">🗑️</span>
+                <h3>Lixo</h3>
+                <p>Garrafas, sacolas e outros lixos podem chegar à água.</p>
+            </article>
+
+            <article class="card">
+                <span class="icone">🏭</span>
+                <h3>Poluição</h3>
+                <p>Produtos sujos ou tóxicos podem contaminar a água.</p>
+            </article>
+
+            <article class="card">
+                <span class="icone">🌳</span>
+                <h3>Falta de plantas</h3>
+                <p>Sem plantas perto da água, a terra pode entrar no rio.</p>
+            </article>
+        </div>
+    </section>
+
+    <section id="simulador" class="simulador">
+        <h2>👀 Veja o que acontece</h2>
+        <p>Clique em um botão.</p>
+
+        <div id="lago" class="lago" role="img" aria-label="Lago limpo">
+            <div class="sol">☀️</div>
+            <div class="plantas">🌿</div>
+            <div class="peixe">🐟</div>
+            <div class="lixo l1">🥤</div>
+            <div class="lixo l2">🛍️</div>
+            <div class="lixo l3">🗑️</div>
+        </div>
+
+        <button class="ruim" onclick="poluir()">🗑️ Jogar lixo no lago</button>
+        <button class="bom" onclick="limpar()">✨ Limpar o lago</button>
+
+        <div id="mensagemSimulador" aria-live="polite">
+            A água está limpa. O peixe está bem.
+        </div>
+    </section>
+
+    <section id="cuidar">
+        <h2>💚 Como podemos ajudar?</h2>
+
+        <div class="passos">
+            <div class="passo">
+                <div class="numero">1</div>
+                <div><strong>Jogue o lixo na lixeira.</strong><br>Não jogue lixo na rua, no rio ou no lago.</div>
+            </div>
+
+            <div class="passo">
+                <div class="numero">2</div>
+                <div><strong>Use menos plástico.</strong><br>Uma garrafa reutilizável pode ajudar.</div>
+            </div>
+
+            <div class="passo">
+                <div class="numero">3</div>
+                <div><strong>Cuide das plantas.</strong><br>Árvores e plantas ajudam a proteger o solo.</div>
+            </div>
+
+            <div class="passo">
+                <div class="numero">4</div>
+                <div><strong>Avise um adulto.</strong><br>Se você vir muita sujeira ou poluição, peça ajuda.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="quiz" class="quiz">
+        <h2>🎮 Jogo rápido</h2>
+        <p><strong>Qual atitude ajuda o rio?</strong></p>
+
+        <div class="quiz-opcoes">
+            <button class="bom" onclick="responder(true)">🗑️➡️♻️ Colocar o lixo no lugar certo</button>
+            <button class="ruim" onclick="responder(false)">🥤➡️🌊 Jogar uma garrafa no rio</button>
+        </div>
+
+        <div id="respostaQuiz" aria-live="polite"></div>
+    </section>
+
+    <section class="leitura">
+        <h2>🔊 Ler uma explicação</h2>
+        <p id="textoLeitura">
+            Rios e lagos precisam de água limpa. Lixo e poluição fazem mal para os animais, para as plantas e para as pessoas. Todos podemos ajudar cuidando do lixo e da natureza.
+        </p>
+        <button class="azul" onclick="lerTexto()">▶ Ouvir</button>
+        <button onclick="pararLeitura()">⏹ Parar</button>
+    </section>
+</main>
+
+<footer>
+    <strong>Água limpa é importante para a vida. 💧🌱</strong>
+</footer>
+
+<script>
+const lago = document.getElementById("lago");
+const mensagem = document.getElementById("mensagemSimulador");
+
+function poluir(){
+    lago.classList.add("sujo");
+    lago.setAttribute("aria-label","Lago poluído com lixo");
+    mensagem.textContent = "A água ficou suja. O lixo pode fazer mal aos peixes, às plantas e às pessoas.";
+}
+
+function limpar(){
+    lago.classList.remove("sujo");
+    lago.setAttribute("aria-label","Lago limpo");
+    mensagem.textContent = "Muito bem! A água está mais limpa e o ambiente fica melhor para a vida.";
+}
+
+function responder(correto){
+    const resposta = document.getElementById("respostaQuiz");
+
+    if(correto){
+        resposta.textContent = "✅ Certo! Colocar o lixo no lugar correto ajuda a proteger rios e lagos.";
+        resposta.className = "correto";
+    }else{
+        resposta.textContent = "❌ Essa atitude faz mal ao rio. O melhor é colocar a garrafa no lixo ou na reciclagem.";
+        resposta.className = "incorreto";
+    }
+}
+
+function lerTexto(){
+    pararLeitura();
+    const texto = document.getElementById("textoLeitura").textContent;
+    const fala = new SpeechSynthesisUtterance(texto);
+    fala.lang = "pt-BR";
+    fala.rate = 0.85;
+    window.speechSynthesis.speak(fala);
+}
+
+function pararLeitura(){
+    window.speechSynthesis.cancel();
+}
+</script>
+</body>
+</html>
+'''
+
+path = Path("/mnt/data/site_degradacao_rios_lagos.html")
+path.write_text(html, encoding="utf-8")
+print(f"Arquivo criado: {path}")
